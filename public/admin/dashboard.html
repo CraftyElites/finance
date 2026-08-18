@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Levyni Connect — Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    :root{
+        --bg:#0d1210;
+        --paper:#141b18;
+        --paper-2:#182019;
+        --line: rgba(237,242,239,0.08);
+        --line-strong: rgba(237,242,239,0.16);
+        --ink:#edf2ef;
+        --muted:#87968d;
+        --naira:#f0a860;
+        --naira-soft: rgba(240,168,96,0.12);
+        --mint:#3ecf8e;
+        --mint-soft: rgba(62,207,142,0.12);
+        --rose:#e8768a;
+        --rose-soft: rgba(232,118,138,0.12);
+        --sky:#6fb3e0;
+        --sky-soft: rgba(111,179,224,0.12);
+    }
+    *{ box-sizing:border-box; }
+    body{
+        background-color:var(--bg);
+        color:var(--ink);
+        font-family:'Inter',system-ui,sans-serif;
+        background-image:
+            radial-gradient(circle at 1px 1px, rgba(237,242,239,0.045) 1px, transparent 0);
+        background-size: 22px 22px;
+    }
+    .display{ font-family:'Space Grotesk',sans-serif; }
+    .mono{ font-family:'JetBrains Mono',monospace; }
+
+    .card{ background:var(--paper); border:1px solid var(--line); border-radius:20px; }
+    .card-2{ background:var(--paper-2); border:1px solid var(--line); border-radius:16px; }
+
+    .stitch{ border-top:1px dashed var(--line-strong); }
+
+    .btn-primary{ background:var(--naira); color:#1a1207; font-weight:600; }
+    .btn-primary:hover{ filter:brightness(1.08); }
+    .btn-ghost{ border:1px solid var(--line-strong); color:var(--ink); }
+    .btn-ghost:hover{ border-color:rgba(237,242,239,0.35); }
+
+    .nav-link{ color:var(--muted); border-left:2px solid transparent; }
+    .nav-link.active{ color:var(--ink); background:rgba(240,168,96,0.08); border-left:2px solid var(--naira); }
+    .nav-link:hover:not(.active){ color:var(--ink); }
+
+    .tab-btn{ color:var(--muted); border:1px solid var(--line); }
+    .tab-btn.active{ color:var(--bg); background:var(--mint); border-color:var(--mint); font-weight:600; }
+
+    .status-pill{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.02em; padding:4px 10px; border-radius:999px; display:inline-flex; align-items:center; gap:6px; }
+    .status-pending{ color:var(--naira); background:var(--naira-soft); }
+    .status-accepted, .status-assessment_started{ color:var(--mint); background:var(--mint-soft); }
+    .status-assessment_done{ color:var(--sky); background:var(--sky-soft); }
+    .status-rejected{ color:var(--rose); background:var(--rose-soft); }
+
+    .icon{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+
+    #sidebar{ transition: transform 0.28s ease; }
+    #backdrop{ transition: opacity 0.28s ease; }
+
+    @media (max-width: 1023px){
+        #sidebar{ position:fixed; inset:0 auto 0 0; width:260px; transform:translateX(-100%); z-index:50; }
+        #sidebar.open{ transform:translateX(0); }
+        #backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.6); opacity:0; pointer-events:none; z-index:40; }
+        #backdrop.open{ opacity:1; pointer-events:auto; }
+    }
+
+    .bar-track{ background:rgba(237,242,239,0.06); border-radius:999px; overflow:hidden; }
+    .bar-fill{ height:100%; border-radius:999px; transition: width 0.6s ease; }
+
+    .scroll-x::-webkit-scrollbar{ height:6px; }
+    .scroll-x::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:99px; }
+
+    .field-label{ font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); }
+    .field{ width:100%; background:var(--paper-2); border:1px solid var(--line); border-radius:14px; padding:12px 14px; color:var(--ink); }
+    .field:focus{ outline:none; border-color:var(--line-strong); }
+    .field::placeholder{ color:var(--muted); }
+    textarea.field{ resize:vertical; }
+
+    .modal-backdrop{ background:rgba(0,0,0,0.7); }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div id="backdrop" onclick="closeSidebar()"></div>
+
+<div class="flex min-h-screen">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="lg:w-64 w-64 shrink-0 bg-[var(--paper)] border-r border-[var(--line)] flex flex-col">
+        <div class="flex items-center justify-between px-6 py-6">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-[var(--naira)] flex items-center justify-center text-[#1a1207] font-bold display">L</div>
+                <div>
+                    <div class="display text-[15px] leading-tight">Levyni Connect</div>
+                    <div class="text-[11px] text-[var(--muted)] mono">ADMIN DASHBOARD</div>
+                </div>
+            </div>
+            <button onclick="closeSidebar()" class="lg:hidden text-[var(--muted)]" aria-label="Close menu">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-3 space-y-1">
+            <button data-view="overview" class="nav-btn nav-link active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">
+                <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="17" rx="1"/></svg>
+                Overview
+            </button>
+            <button data-view="applications" class="nav-btn nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Applications
+            </button>
+            <button data-view="tiers" class="nav-btn nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                Tiers
+            </button>
+            <button data-view="questions" class="nav-btn nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">
+                <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2 1.9-2 3.6"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Assessment Questions
+            </button>
+            <button data-view="settings" class="nav-btn nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">
+                <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </button>
+        </nav>
+
+        <div class="px-6 py-5 stitch">
+            <div class="text-sm truncate" id="adminName">—</div>
+            <button onclick="logout()" class="text-xs text-[var(--muted)] hover:text-[var(--ink)] mt-1">Log out</button>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="flex-1 min-w-0">
+        <!-- Topbar -->
+        <header class="sticky top-0 z-30 bg-[var(--bg)]/90 backdrop-blur border-b border-[var(--line)] px-5 lg:px-10 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="openSidebar()" class="lg:hidden text-[var(--ink)]" aria-label="Open menu">
+                    <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <h1 id="viewTitle" class="display text-lg lg:text-xl">Overview</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="hidden sm:flex items-center gap-2 text-xs text-[var(--muted)] mono">
+                    <svg class="icon w-3.5 h-3.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Live data
+                </span>
+                <div id="avatarInitials" class="w-9 h-9 rounded-full bg-[var(--paper-2)] border border-[var(--line)] flex items-center justify-center text-xs font-semibold">A</div>
+            </div>
+        </header>
+
+        <main class="px-5 lg:px-10 py-8 max-w-6xl mx-auto">
+
+            <!-- ============ OVERVIEW ============ -->
+            <section id="view-overview">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="card p-5">
+                        <div class="flex items-center justify-between text-[var(--muted)] mb-3">
+                            <span class="text-xs uppercase tracking-wide">Applications</span>
+                            <svg class="icon w-4 h-4" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        </div>
+                        <div class="mono text-2xl lg:text-3xl font-semibold" data-count="totalApps">0</div>
+                        <div class="text-xs text-[var(--muted)] mt-1" id="cohortCapLabel">&nbsp;</div>
+                    </div>
+                    <div class="card p-5">
+                        <div class="flex items-center justify-between text-[var(--muted)] mb-3">
+                            <span class="text-xs uppercase tracking-wide">Conversion</span>
+                            <svg class="icon w-4 h-4" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        </div>
+                        <div class="mono text-2xl lg:text-3xl font-semibold" data-count="conversion">0%</div>
+                        <div class="text-xs text-[var(--muted)] mt-1">Accepted ÷ total applications</div>
+                    </div>
+                    <div class="card p-5">
+                        <div class="flex items-center justify-between text-[var(--muted)] mb-3">
+                            <span class="text-xs uppercase tracking-wide">Linking Revenue</span>
+                            <svg class="icon w-4 h-4" viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <div class="mono text-2xl lg:text-3xl font-semibold text-[var(--naira)]" data-count="revenue">₦0</div>
+                        <div class="text-xs text-[var(--muted)] mt-1">From accepted applicants</div>
+                    </div>
+                    <div class="card p-5">
+                        <div class="flex items-center justify-between text-[var(--muted)] mb-3">
+                            <span class="text-xs uppercase tracking-wide">Assessment Done</span>
+                            <svg class="icon w-4 h-4" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                        <div class="mono text-2xl lg:text-3xl font-semibold" data-count="completion">0%</div>
+                        <div class="text-xs text-[var(--muted)] mt-1">Of accepted applicants</div>
+                    </div>
+                </div>
+
+                <div class="grid lg:grid-cols-5 gap-6 mb-8">
+                    <div class="card p-6 lg:col-span-3">
+                        <div class="flex items-center justify-between mb-5">
+                            <h3 class="display text-base">Pipeline by status</h3>
+                            <span class="text-xs text-[var(--muted)] mono" id="pipelineTotal"></span>
+                        </div>
+                        <div id="pipelineBars" class="space-y-4"></div>
+                    </div>
+
+                    <div class="card p-6 lg:col-span-2 flex flex-col">
+                        <h3 class="display text-base mb-5">Tier mix</h3>
+                        <div class="flex items-center gap-6 flex-1">
+                            <svg viewBox="0 0 42 42" class="w-32 h-32 shrink-0 -rotate-90" id="donutChart"></svg>
+                            <div id="donutLegend" class="space-y-2 text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="display text-base">Recent activity</h3>
+                        <svg class="icon text-[var(--muted)]" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </div>
+                    <div id="activityFeed" class="space-y-0"></div>
+                </div>
+            </section>
+
+            <!-- ============ APPLICATIONS ============ -->
+            <section id="view-applications" class="hidden">
+                <div class="flex gap-2 mb-6 overflow-x-auto scroll-x pb-1" id="tabRow">
+                    <button data-status="" class="tab-btn active px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap">All</button>
+                    <button data-status="pending" class="tab-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap">Pending</button>
+                    <button data-status="accepted" class="tab-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap">Accepted</button>
+                    <button data-status="assessment_started" class="tab-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap">In Assessment</button>
+                    <button data-status="assessment_done" class="tab-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap">Assessment Done</button>
+                    <button data-status="rejected" class="tab-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap">Rejected</button>
+                </div>
+
+                <div id="toast" class="hidden mb-5 rounded-2xl px-5 py-3 text-sm"></div>
+
+                <!-- desktop table -->
+                <div class="card overflow-hidden hidden md:block">
+                    <table class="w-full text-sm">
+                        <thead class="text-[var(--muted)] text-left text-xs uppercase tracking-wide">
+                            <tr>
+                                <th class="px-6 py-4 font-medium">Applicant</th>
+                                <th class="px-6 py-4 font-medium">Tier</th>
+                                <th class="px-6 py-4 font-medium">Business</th>
+                                <th class="px-6 py-4 font-medium">Submitted</th>
+                                <th class="px-6 py-4 font-medium">Status</th>
+                                <th class="px-6 py-4 font-medium text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="6" class="px-6 py-10 text-center text-[var(--muted)]">Loading applications…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- mobile cards -->
+                <div id="cardList" class="md:hidden space-y-3">
+                    <div class="card p-8 text-center text-[var(--muted)] text-sm">Loading applications…</div>
+                </div>
+            </section>
+
+            <!-- ============ TIERS ============ -->
+            <section id="view-tiers" class="hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                    <p class="text-[var(--muted)] text-sm max-w-lg">These power the "Pick Your Tier" cards on the landing page, the linking fee charged at application, and the post-assessment slot booking fee.</p>
+                    <button onclick="openTierModal()" class="btn-primary px-5 py-3 text-sm rounded-2xl whitespace-nowrap shrink-0">+ Add Tier</button>
+                </div>
+                <div id="tiersList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div class="card p-8 text-center text-[var(--muted)] text-sm col-span-full">Loading tiers…</div>
+                </div>
+            </section>
+
+            <!-- ============ QUESTIONS ============ -->
+            <section id="view-questions" class="hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                    <p class="text-[var(--muted)] text-sm max-w-lg">These are the questions shown on the live assessment page. Changes here take effect immediately for anyone opening an assessment link.</p>
+                    <button onclick="openQuestionModal()" class="btn-primary px-5 py-3 text-sm rounded-2xl whitespace-nowrap shrink-0">+ Add Question</button>
+                </div>
+                <div id="questionsList" class="space-y-5">
+                    <div class="card p-8 text-center text-[var(--muted)] text-sm">Loading questions…</div>
+                </div>
+            </section>
+
+            <!-- ============ SETTINGS ============ -->
+            <section id="view-settings" class="hidden">
+                <p class="text-[var(--muted)] text-sm max-w-lg mb-6">
+                    Controls the current cohort's application cap (default 1,000) and the WhatsApp group applicants are redirected to right after applying.
+                </p>
+                <div class="card p-8 max-w-xl">
+                    <label class="field-label">Cohort name</label>
+                    <input id="settingsCohortName" type="text" class="field mt-2 mb-5" placeholder="e.g. Cohort 1">
+
+                    <label class="field-label">Max applications for this cohort</label>
+                    <input id="settingsMaxApplications" type="number" min="1" class="field mt-2 mb-2" placeholder="1000">
+                    <div id="settingsCohortCount" class="text-xs text-[var(--muted)] mb-5"></div>
+
+                    <label class="field-label">WhatsApp group URL</label>
+                    <input id="settingsWhatsappUrl" type="url" class="field mt-2 mb-6" placeholder="https://chat.whatsapp.com/...">
+
+                    <button onclick="saveSettings()" class="w-full py-3 btn-primary rounded-2xl">Save Settings</button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- Reject modal -->
+<div id="rejectModal" class="hidden fixed inset-0 modal-backdrop items-center justify-center z-50 px-6">
+    <div class="card p-8 max-w-md w-full">
+        <h3 class="display text-xl mb-4">Reject application</h3>
+        <label class="field-label">Note (optional)</label>
+        <textarea id="rejectNote" class="field h-28 mt-2 mb-6" placeholder="Optional note to include in the email..."></textarea>
+        <div class="flex gap-3">
+            <button onclick="closeRejectModal()" class="flex-1 py-3 btn-ghost rounded-2xl">Cancel</button>
+            <button onclick="confirmReject()" class="flex-1 py-3 rounded-2xl font-semibold" style="background:var(--rose); color:#2b0e14;">Reject &amp; Email</button>
+        </div>
+    </div>
+</div>
+
+<!-- Call schedule modal -->
+<div id="scheduleModal" class="hidden fixed inset-0 modal-backdrop items-center justify-center z-50 px-6">
+    <div class="card p-8 max-w-md w-full">
+        <h3 class="display text-xl mb-2">Schedule intro call</h3>
+        <p class="text-sm text-[var(--muted)] mb-5">Pick the real date and time (WAT). Applicant gets an email with this slot.</p>
+        <label class="field-label">Date &amp; time</label>
+        <input id="scheduleAtInput" type="datetime-local" class="field mt-2 mb-2">
+        <div id="scheduleAttemptHint" class="text-xs text-[var(--muted)] mono mb-6"></div>
+        <div class="flex gap-3">
+            <button onclick="closeScheduleModal()" class="flex-1 py-3 btn-ghost rounded-2xl">Cancel</button>
+            <button onclick="confirmSchedule()" class="flex-1 py-3 btn-primary rounded-2xl">Send schedule</button>
+        </div>
+    </div>
+</div>
+
+<!-- Question modal (add / edit) -->
+<div id="questionModal" class="hidden fixed inset-0 modal-backdrop items-center justify-center z-50 px-6 py-10 overflow-y-auto">
+    <div class="card p-8 max-w-lg w-full my-auto">
+        <h3 id="questionModalTitle" class="display text-xl mb-4">Add question</h3>
+        <label class="field-label">Question</label>
+        <textarea id="questionText" class="field h-20 mt-2 mb-5" placeholder="e.g. What is gross margin?"></textarea>
+
+        <label class="field-label">Answer options — select the correct one</label>
+        <div id="optionsList" class="space-y-3 mt-2 mb-3"></div>
+        <button onclick="addOptionRow('', false)" class="text-xs text-[var(--mint)] hover:brightness-110 mb-5">+ Add another option</button>
+
+        <label class="field-label">Sort order (lower shows first)</label>
+        <input id="questionSortOrder" type="number" class="field mt-2 mb-6" value="0">
+
+        <div class="flex gap-3">
+            <button onclick="closeQuestionModal()" class="flex-1 py-3 btn-ghost rounded-2xl">Cancel</button>
+            <button onclick="saveQuestion()" class="flex-1 py-3 btn-primary rounded-2xl">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Tier modal (add / edit) -->
+<div id="tierModal" class="hidden fixed inset-0 modal-backdrop items-center justify-center z-50 px-6 py-10 overflow-y-auto">
+    <div class="card p-8 max-w-lg w-full my-auto">
+        <h3 id="tierModalTitle" class="display text-xl mb-4">Add tier</h3>
+
+        <label class="field-label">Tier name</label>
+        <input id="tierName" type="text" class="field mt-2 mb-5" placeholder="e.g. Growth">
+
+        <div class="grid grid-cols-2 gap-4 mb-5">
+            <div>
+                <label class="field-label">Linking fee (₦)</label>
+                <input id="tierAmount" type="number" class="field mt-2" placeholder="10000">
+            </div>
+            <div>
+                <label class="field-label">Slot booking fee (₦)</label>
+                <input id="tierSlotFee" type="number" class="field mt-2" placeholder="25000">
+            </div>
+        </div>
+
+        <label class="field-label">Features — one per line</label>
+        <textarea id="tierFeatures" class="field h-28 mt-2 mb-5" placeholder="All Starter + priority&#10;Faster VA slot"></textarea>
+
+        <div class="flex items-center gap-3 mb-6">
+            <input id="tierRecommended" type="checkbox" class="w-5 h-5" style="accent-color:var(--mint);">
+            <label for="tierRecommended" class="text-sm text-[var(--ink)]/90">Mark as "Recommended" (highlighted card)</label>
+        </div>
+
+        <label class="field-label">Sort order (lower shows first)</label>
+        <input id="tierSortOrder" type="number" class="field mt-2 mb-6" value="0">
+
+        <div class="flex gap-3">
+            <button onclick="closeTierModal()" class="flex-1 py-3 btn-ghost rounded-2xl">Cancel</button>
+            <button onclick="saveTier()" class="flex-1 py-3 btn-primary rounded-2xl">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Applicant profile modal -->
+<div id="profileModal" class="hidden fixed inset-0 modal-backdrop items-center justify-center z-50 px-6 py-10 overflow-y-auto">
+    <div class="card p-8 max-w-2xl w-full my-auto">
+        <div class="flex items-start justify-between gap-4 mb-6">
+            <div class="min-w-0">
+                <h3 class="display text-xl truncate" id="profileName">—</h3>
+                <div class="text-sm text-[var(--muted)] truncate" id="profileEmail">—</div>
+            </div>
+            <button onclick="closeProfileModal()" class="text-[var(--muted)] hover:text-[var(--ink)] shrink-0" aria-label="Close">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <div class="mb-6">
+            <div class="field-label mb-3">Pipeline progress</div>
+            <div id="profileProgress" class="flex items-center gap-1.5 flex-wrap text-xs mono"></div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="card-2 p-4">
+                <div class="field-label mb-1.5">Business</div>
+                <div class="font-medium" id="profileBusiness">—</div>
+                <div class="text-xs text-[var(--muted)] mt-1" id="profileBusinessMeta"></div>
+            </div>
+            <div class="card-2 p-4">
+                <div class="field-label mb-1.5">Tier & fees</div>
+                <div class="text-[var(--naira)] font-semibold mono" id="profileTier">—</div>
+                <div class="text-xs text-[var(--muted)] mt-1" id="profileTierMeta"></div>
+            </div>
+            <div class="card-2 p-4">
+                <div class="field-label mb-1.5">Submitted</div>
+                <div class="mono text-sm" id="profileSubmitted">—</div>
+            </div>
+            <div class="card-2 p-4">
+                <div class="field-label mb-1.5">Current status</div>
+                <div id="profileStatusPill"></div>
+            </div>
+        </div>
+
+        <div id="profileExtra" class="card-2 p-4 mb-6 hidden">
+            <div class="field-label mb-2">Additional details</div>
+            <div id="profileExtraBody" class="text-sm space-y-1.5 text-[var(--muted)]"></div>
+        </div>
+
+        <div class="card-2 p-4 mb-6">
+            <div class="field-label mb-3">Files</div>
+            <div id="profileLogoWrap" class="mb-4 hidden">
+                <div class="text-[var(--muted)] text-xs mb-1.5">Company logo</div>
+                <img id="profileLogoImg" alt="Logo" class="h-12 max-w-[140px] object-contain rounded-lg border border-[var(--line)] bg-[var(--paper-2)] p-1">
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <div class="text-[var(--muted)] text-xs mb-1.5">Invoice PDF</div>
+                    <div id="profileInvoiceFile" class="text-xs mono text-[var(--muted)] mb-2 truncate">None</div>
+                    <label class="inline-flex items-center gap-2 px-3 py-1.5 btn-ghost text-xs font-medium rounded-lg cursor-pointer">
+                        Upload
+                        <input type="file" id="invoiceFileInput" accept=".pdf,application/pdf" class="hidden" onchange="uploadApplicantFile('invoice')">
+                    </label>
+                </div>
+                <div>
+                    <div class="text-[var(--muted)] text-xs mb-1.5">Call audio</div>
+                    <div id="profileCallAudio" class="text-xs mono text-[var(--muted)] mb-2 truncate">None</div>
+                    <div class="flex flex-wrap gap-2">
+                        <label class="inline-flex items-center gap-2 px-3 py-1.5 btn-ghost text-xs font-medium rounded-lg cursor-pointer">
+                            Upload
+                            <input type="file" id="callAudioInput" accept="audio/*,.mp3,.wav,.m4a,.webm,.ogg" class="hidden" onchange="uploadApplicantFile('call-audio')">
+                        </label>
+                        <button type="button" id="transcribeBtn" onclick="transcribeCallAudio()" class="px-3 py-1.5 btn-ghost text-xs font-medium rounded-lg">Transcribe</button>
+                    </div>
+                </div>
+            </div>
+            <div id="profileTranscript" class="mt-3 text-xs text-[var(--muted)] hidden"></div>
+        </div>
+
+        <div class="stitch pt-5">
+            <div class="field-label mb-3">Actions</div>
+            <div id="profileActions" class="flex flex-wrap gap-2"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// AUTH
+// ============================================================
+const API_BASE = '/api';
+const token = localStorage.getItem('levyni_admin_token');
+if (!token) window.location.href = 'login.html';
+
+const adminNameStored = localStorage.getItem('levyni_admin_name') || '';
+document.getElementById('adminName').textContent = adminNameStored || 'Admin';
+document.getElementById('avatarInitials').textContent = getInitials(adminNameStored);
+
+function getInitials(name){
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'A';
+    if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function authHeaders(){
+    return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+}
+
+function logout(){
+    localStorage.removeItem('levyni_admin_token');
+    localStorage.removeItem('levyni_admin_name');
+    window.location.href = 'login.html';
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let applications = [];
+let tiers = [];
+let questions = [];
+let currentStatus = '';
+let currentView = 'overview';
+let rejectTargetId = null;
+let editingTierId = null;
+let editingQuestionId = null;
+const statuses = ['pending','accepted','assessment_started','assessment_done','rejected'];
+
+function icon(name){
+    const icons = {
+        mail: '<svg class="icon w-3.5 h-3.5" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>',
+        check: '<svg class="icon w-3.5 h-3.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
+        x: '<svg class="icon w-3.5 h-3.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+        refresh: '<svg class="icon w-3.5 h-3.5" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+    };
+    return icons[name] || '';
+}
+
+function escapeHtml(str){
+    return String(str ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function formatStatus(s){
+    return { pending:'Pending', accepted:'Accepted', assessment_started:'In Assessment', assessment_done:'Assessment Done', rejected:'Rejected' }[s] || s;
+}
+function timeAgo(iso){
+    const days = Math.floor((Date.now() - new Date(iso)) / 86400000);
+    if (days === 0) return 'today';
+    if (days === 1) return '1 day ago';
+    return `${days} days ago`;
+}
+function showToast(msg, type){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `mb-5 rounded-2xl px-5 py-3 text-sm ${type === 'error' ? 'bg-[var(--rose-soft)] border border-[var(--rose)]/40 text-[var(--rose)]' : 'bg-[var(--mint-soft)] border border-[var(--mint)]/40 text-[var(--mint)]'}`;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+// ============================================================
+// SIDEBAR / NAV
+// ============================================================
+function openSidebar(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('backdrop').classList.add('open'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('backdrop').classList.remove('open'); }
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        switchView(btn.dataset.view);
+        closeSidebar();
+    });
+});
+
+function switchView(view){
+    currentView = view;
+    ['overview','applications','tiers','questions','settings'].forEach(v => {
+        document.getElementById('view-' + v).classList.toggle('hidden', v !== view);
+    });
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    const titles = { overview:'Overview', applications:'Applications', tiers:'Tiers', questions:'Assessment Questions', settings:'Settings' };
+    document.getElementById('viewTitle').textContent = titles[view];
+
+    if (view === 'overview') renderOverview();
+    if (view === 'applications') renderApplications();
+    if (view === 'tiers') renderTiers();
+    if (view === 'questions') renderQuestions();
+    if (view === 'settings') loadSettings();
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+async function loadApplications(){
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications`, { headers: authHeaders() });
+        if (res.status === 401) return logout();
+        const data = await res.json();
+        applications = data.applications || [];
+    } catch (err) {
+        applications = [];
+        showToast('Could not load applications.', 'error');
+    }
+}
+
+async function loadTiers(){
+    try {
+        const res = await fetch(`${API_BASE}/admin/tiers`, { headers: authHeaders() });
+        if (res.status === 401) return logout();
+        const data = await res.json();
+        tiers = data.tiers || [];
+    } catch (err) {
+        tiers = [];
+        showToast('Could not load tiers.', 'error');
+    }
+}
+
+async function loadQuestions(){
+    const list = document.getElementById('questionsList');
+    list.innerHTML = `<div class="card p-8 text-center text-[var(--muted)] text-sm">Loading questions…</div>`;
+    try {
+        const res = await fetch(`${API_BASE}/admin/questions`, { headers: authHeaders() });
+        if (res.status === 401) return logout();
+        const data = await res.json();
+        questions = data.questions || [];
+        renderQuestions();
+    } catch (err) {
+        list.innerHTML = `<div class="card p-8 text-center text-[var(--rose)] text-sm">Could not load questions.</div>`;
+    }
+}
+
+async function refreshApplications(){
+    await loadApplications();
+    if (currentView === 'overview') renderOverview();
+    if (currentView === 'applications') renderApplications();
+}
+
+async function refreshTiers(){
+    await loadTiers();
+    if (currentView === 'overview') renderOverview();
+    if (currentView === 'tiers') renderTiers();
+}
+
+// ============================================================
+// OVERVIEW
+// ============================================================
+function renderOverview(){
+    const total = applications.length;
+    const accepted = applications.filter(a => ['accepted','assessment_started','assessment_done'].includes(a.status)).length;
+    const done = applications.filter(a => a.status === 'assessment_done').length;
+    const revenue = applications.filter(a => a.status !== 'pending' && a.status !== 'rejected').reduce((s,a) => s + Number(a.tier_amount || 0), 0);
+    const conversion = total ? Math.round((accepted/total)*100) : 0;
+    const completion = accepted ? Math.round((done/accepted)*100) : 0;
+
+    animateCount('totalApps', total);
+    animateCount('conversion', conversion, '%');
+    animateCount('revenue', revenue, '', '₦');
+    animateCount('completion', completion, '%');
+
+    document.getElementById('pipelineTotal').textContent = total + ' total';
+
+    const colors = { pending:'var(--naira)', accepted:'var(--mint)', assessment_started:'var(--mint)', assessment_done:'var(--sky)', rejected:'var(--rose)' };
+    const counts = statuses.map(s => ({ status:s, count: applications.filter(a => a.status === s).length }));
+    const max = Math.max(...counts.map(c => c.count), 1);
+
+    document.getElementById('pipelineBars').innerHTML = counts.map(c => `
+        <div>
+            <div class="flex justify-between text-xs mb-1.5">
+                <span class="text-[var(--muted)]">${formatStatus(c.status)}</span>
+                <span class="mono">${c.count}</span>
+            </div>
+            <div class="bar-track h-2.5">
+                <div class="bar-fill" style="width:${(c.count/max)*100}%; background:${colors[c.status]}"></div>
+            </div>
+        </div>
+    `).join('');
+
+    // donut chart: tier mix among all applications
+    const palette = ['#f0a860','#3ecf8e','#6fb3e0','#e8768a','#9d8df1','#f0e06a'];
+    const tierCounts = tiers.map((t,i) => ({ ...t, count: applications.filter(a => a.tier === t.name).length, color: palette[i % palette.length] }));
+    let offset = 0;
+    const circumference = 2 * Math.PI * 15.9155;
+    const segs = tierCounts.map((t) => {
+        const pct = total ? (t.count/total) : 0;
+        const dash = pct * circumference;
+        const seg = `<circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="${t.color}" stroke-width="5" stroke-dasharray="${dash} ${circumference-dash}" stroke-dashoffset="${-offset}"/>`;
+        offset += dash;
+        return seg;
+    }).join('');
+    document.getElementById('donutChart').innerHTML = `<circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(237,242,239,0.06)" stroke-width="5"/>` + segs;
+    document.getElementById('donutLegend').innerHTML = tierCounts.length ? tierCounts.map((t) => `
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${t.color}"></span>
+            <span class="text-[var(--muted)]">${escapeHtml(t.name)}</span>
+            <span class="mono ml-auto">${t.count}</span>
+        </div>
+    `).join('') : `<div class="text-[var(--muted)] text-xs">No tiers yet.</div>`;
+
+    // activity feed
+    const recent = [...applications].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,6);
+    const feedIcon = { pending:'mail', accepted:'check', assessment_started:'refresh', assessment_done:'check', rejected:'x' };
+    document.getElementById('activityFeed').innerHTML = recent.length ? recent.map((a,i) => `
+        <div class="flex items-center gap-4 py-3 ${i>0 ? 'stitch' : ''}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center status-${a.status}">${icon(feedIcon[a.status])}</div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm truncate"><span class="font-medium">${escapeHtml(a.full_name)}</span> <span class="text-[var(--muted)]">— ${formatStatus(a.status).toLowerCase()}</span></div>
+                <div class="text-xs text-[var(--muted)]">${escapeHtml(a.business_name || 'No business name')} · ${escapeHtml(a.tier || '')} tier</div>
+            </div>
+            <div class="text-xs text-[var(--muted)] mono shrink-0">${timeAgo(a.created_at)}</div>
+        </div>
+    `).join('') : `<div class="text-[var(--muted)] text-sm py-6 text-center">No activity yet.</div>`;
+}
+
+function animateCount(id, target, suffix='', prefix=''){
+    const el = document.querySelector(`[data-count="${id}"]`);
+    if (!el) return;
+    const start = 0;
+    const duration = 700;
+    const t0 = performance.now();
+    function step(now){
+        const p = Math.min((now-t0)/duration, 1);
+        const val = Math.round(start + (target-start) * (1 - Math.pow(1-p, 3)));
+        el.textContent = prefix + val.toLocaleString() + suffix;
+        if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+// ============================================================
+// APPLICATIONS
+// ============================================================
+document.querySelectorAll('#tabRow .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentStatus = btn.dataset.status;
+        document.querySelectorAll('#tabRow .tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+        renderApplications();
+    });
+});
+
+function filteredApps(){
+    return currentStatus ? applications.filter(a => a.status === currentStatus) : applications;
+}
+
+function renderApplications(){
+    const list = filteredApps();
+    const tbody = document.getElementById('tableBody');
+    const cards = document.getElementById('cardList');
+
+    if (!list.length){
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-[var(--muted)]">No applications here yet.</td></tr>`;
+        cards.innerHTML = `<div class="card p-8 text-center text-[var(--muted)] text-sm">No applications here yet.</div>`;
+        return;
+    }
+
+    tbody.innerHTML = list.map(a => `
+        <tr class="stitch">
+            <td class="px-6 py-4">
+                <div class="font-medium">${escapeHtml(a.full_name)}</div>
+                <div class="text-[var(--muted)] text-xs">${escapeHtml(a.email)}</div>
+            </td>
+            <td class="px-6 py-4">
+                <span class="text-[var(--naira)] font-medium">${escapeHtml(a.tier)}</span>
+                <div class="text-[var(--muted)] text-xs mono">₦${Number(a.tier_amount).toLocaleString()}</div>
+            </td>
+            <td class="px-6 py-4 text-[var(--ink)]/90">${escapeHtml(a.business_name || '—')}</td>
+            <td class="px-6 py-4 text-[var(--muted)] mono text-xs">${new Date(a.created_at).toLocaleDateString()}</td>
+            <td class="px-6 py-4"><span class="status-pill status-${a.status}">${formatStatus(a.status)}</span></td>
+            <td class="px-6 py-4 text-right"><div class="inline-flex flex-wrap justify-end gap-y-1.5">${actionButtons(a)}</div></td>
+        </tr>
+    `).join('');
+
+    cards.innerHTML = list.map(a => `
+        <div class="card p-5">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <div class="font-medium">${escapeHtml(a.full_name)}</div>
+                    <div class="text-[var(--muted)] text-xs">${escapeHtml(a.email)}</div>
+                </div>
+                <span class="status-pill status-${a.status}">${formatStatus(a.status)}</span>
+            </div>
+            <div class="flex justify-between text-sm mb-4">
+                <div><span class="text-[var(--muted)] text-xs">Tier</span><div class="text-[var(--naira)] font-medium">${escapeHtml(a.tier)} · ₦${Number(a.tier_amount).toLocaleString()}</div></div>
+                <div class="text-right"><span class="text-[var(--muted)] text-xs">Business</span><div>${escapeHtml(a.business_name || '—')}</div></div>
+            </div>
+            <div class="flex flex-col gap-3 stitch pt-3 sm:flex-row sm:justify-between sm:items-center">
+                <span class="text-xs text-[var(--muted)] mono">${new Date(a.created_at).toLocaleDateString()}</span>
+                <div class="flex flex-wrap gap-1.5 justify-end">${actionButtons(a)}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function actionButtons(a){
+    return `<button onclick="openProfileModal('${a.id}')" class="px-3 py-1.5 btn-ghost text-xs font-medium rounded-lg">More</button>`;
+}
+
+
+async function addCompanyToBase(id){
+    if (!confirm('Email a fresh Levyni Co registration link? Any previous unused link for this email will stop working.')) return;
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications/${id}/add-to-base`, {
+            method: 'POST', headers: authHeaders(),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not send registration link');
+        showToast(data.message || 'Registration link emailed.', 'success');
+        openProfileModal(id);
+        refreshApplications();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function acceptApplication(id){
+    if (!confirm('Accept this application? This emails the assessment link and the pitch brief PDF together.')) return;
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications/${id}/accept`, { method: 'POST', headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not accept application');
+        showToast(data.message || 'Accepted and email sent.', 'success');
+        refreshApplications();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function resendInvite(id){
+    if (!confirm('Resend assessment link + pitch brief PDF? The previous assessment link will stop working.')) return;
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications/${id}/resend`, { method: 'POST', headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not resend invite');
+        showToast(data.message || 'New link emailed.', 'success');
+        refreshApplications();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function openRejectModal(id){
+    rejectTargetId = id;
+    document.getElementById('rejectNote').value = '';
+    const modal = document.getElementById('rejectModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeRejectModal(){
+    rejectTargetId = null;
+    const modal = document.getElementById('rejectModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+async function confirmReject(){
+    if (!rejectTargetId) return;
+    const note = document.getElementById('rejectNote').value.trim();
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications/${rejectTargetId}/reject`, {
+            method: 'POST', headers: authHeaders(), body: JSON.stringify({ note }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not reject application');
+        closeRejectModal();
+        showToast('Application rejected.', 'success');
+        refreshApplications();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// ============================================================
+// PROFILE + APPLICANT ACTIONS
+// ============================================================
+const PIPELINE_STEPS = [
+    { key: 'pending', label: 'Pending' },
+    { key: 'accepted', label: 'Accepted' },
+    { key: 'assessment_started', label: 'In Assessment' },
+    { key: 'assessment_done', label: 'Assessment Done' },
+];
+const CALL_SCHEDULE_MAX = 5;
+let profileAppId = null;
+
+function fileLabel(p) {
+    if (!p) return 'None';
+    const name = String(p).split('/').pop();
+    return name || p;
+}
+
+function openProfileModal(id){
+    const a = applications.find(app => String(app.id) === String(id));
+    if (!a) return showToast('Applicant not found.', 'error');
+    profileAppId = a.id;
+
+    document.getElementById('profileName').textContent = a.full_name || '—';
+    document.getElementById('profileEmail').textContent = a.email || '—';
+    document.getElementById('profileBusiness').textContent = a.business_name || '—';
+    document.getElementById('profileBusinessMeta').textContent = a.industry || a.business_type || a.sector || '';
+    document.getElementById('profileTier').textContent = a.tier ? `${a.tier} · ₦${Number(a.tier_amount || 0).toLocaleString()}` : '—';
+    document.getElementById('profileTierMeta').textContent = a.slot_fee != null ? `Slot fee ₦${Number(a.slot_fee).toLocaleString()}` : '';
+    document.getElementById('profileSubmitted').textContent = a.created_at
+        ? `${new Date(a.created_at).toLocaleString()} · ${timeAgo(a.created_at)}` : '—';
+    document.getElementById('profileStatusPill').innerHTML =
+        `<span class="status-pill status-${a.status}">${formatStatus(a.status)}</span>`;
+
+    const logoWrap = document.getElementById('profileLogoWrap');
+    const logoImg = document.getElementById('profileLogoImg');
+    if (a.logo_path) {
+        logoImg.src = '/' + String(a.logo_path).replace(/^\/+/, '');
+        logoWrap.classList.remove('hidden');
+    } else {
+        logoImg.removeAttribute('src');
+        logoWrap.classList.add('hidden');
+    }
+
+    document.getElementById('profileInvoiceFile').textContent = fileLabel(a.invoice_file_path);
+    document.getElementById('profileCallAudio').textContent = fileLabel(a.call_audio_path);
+    const tr = document.getElementById('profileTranscript');
+    if (a.call_transcript) {
+        tr.textContent = a.call_transcript.slice(0, 400) + (a.call_transcript.length > 400 ? '…' : '');
+        tr.classList.remove('hidden');
+    } else {
+        tr.textContent = '';
+        tr.classList.add('hidden');
+    }
+    document.getElementById('transcribeBtn').disabled = !a.call_audio_path;
+    document.getElementById('transcribeBtn').classList.toggle('opacity-40', !a.call_audio_path);
+
+    const isRejected = a.status === 'rejected';
+    const idx = PIPELINE_STEPS.findIndex(s => s.key === a.status);
+    document.getElementById('profileProgress').innerHTML = PIPELINE_STEPS.map((step, i) => {
+        const state = isRejected ? (i === 0 ? 'done' : 'muted')
+            : idx < 0 ? 'muted' : i < idx ? 'done' : i === idx ? 'current' : 'muted';
+        const style = {
+            done: 'background:var(--mint-soft);color:var(--mint);border-color:rgba(62,207,142,.35)',
+            current: 'background:var(--naira-soft);color:var(--naira);border-color:rgba(240,168,96,.4)',
+            muted: 'background:transparent;color:var(--muted);border-color:var(--line-strong)',
+        }[state];
+        return `<span class="px-2.5 py-1 rounded-full border" style="${style}">${step.label}</span>${i < 3 ? '<span class="text-[var(--muted)] mx-0.5">→</span>' : ''}`;
+    }).join('') + (isRejected
+        ? '<span class="text-[var(--muted)] mx-0.5">→</span><span class="px-2.5 py-1 rounded-full border" style="background:var(--rose-soft);color:var(--rose);border-color:rgba(232,118,138,.35)">Rejected</span>'
+        : '');
+
+    const extraKeys = ['phone','whatsapp','linkedin','website','location','city','state','note','admin_note','assessment_score','call_notes'];
+    const extras = extraKeys.filter(k => a[k] != null && String(a[k]).trim())
+        .map(k => `<div><span class="text-[var(--ink)]/70 capitalize">${k.replace(/_/g,' ')}:</span> ${escapeHtml(String(a[k]))}</div>`);
+    const extraEl = document.getElementById('profileExtra');
+    document.getElementById('profileExtraBody').innerHTML = extras.join('');
+    extraEl.classList.toggle('hidden', !extras.length);
+
+    // Actions: Invoice (+ register link) → Schedule → Levyni Co → Accept / Reject
+    const invSent = !!(a.invoice_sent || a.invoice_sent_at);
+    const pitchSent = !!(a.pitch_sent || a.pitch_sent_at);
+    const attempts = Number(a.call_schedule_attempts || 0);
+    const canSchedule = attempts < CALL_SCHEDULE_MAX;
+    const onLevyniCo = a.levyni_co_user_id && a.levyni_co_user_id !== 'pending_otp';
+    const aid = a.id;
+    let html = '';
+
+    if (a.status !== 'rejected') {
+        html += `<button onclick="applicantAction('${aid}','invoice')" class="px-4 py-2 btn-ghost text-xs font-semibold rounded-xl" title="Emails invoice PDF + one-time Levyni Co registration link">${invSent ? 'Resend invoice + register link' : 'Send invoice + register link'}</button>`;
+        const schedLabel = a.call_scheduled_at
+            ? `Reschedule (${attempts}/${CALL_SCHEDULE_MAX})`
+            : `Schedule call (${attempts}/${CALL_SCHEDULE_MAX})`;
+        html += canSchedule
+            ? `<button onclick="openScheduleModal('${aid}')" class="px-4 py-2 btn-ghost text-xs font-semibold rounded-xl">${schedLabel}</button>`
+            : `<button disabled class="px-4 py-2 btn-ghost text-xs font-semibold rounded-xl opacity-40 cursor-not-allowed">Call schedule maxed</button>`;
+        if (a.call_scheduled_at) {
+            html += `<span class="text-xs text-[var(--muted)] mono self-center">Next call: ${new Date(a.call_scheduled_at).toLocaleString()}</span>`;
+        }
+    }
+
+    if (!onLevyniCo && a.status !== 'rejected') {
+        html += `<button onclick="addCompanyToBase('${aid}')" class="px-4 py-2 btn-primary text-xs font-semibold rounded-xl" title="Email a fresh registration link (invalidates previous unused link for this email)">Regenerate register link</button>`;
+    } else if (onLevyniCo) {
+        html += `<span class="text-xs text-[var(--mint)] self-center mono">On Levyni Co · ${escapeHtml(String(a.levyni_co_user_id))}</span>`;
+    }
+
+    if (a.status === 'pending') {
+        html += `<button onclick="acceptApplication('${aid}');closeProfileModal()" class="px-4 py-2 btn-primary text-xs font-semibold rounded-xl">Accept (assessment + pitch PDF)</button>`;
+        html += `<button onclick="closeProfileModal();openRejectModal('${aid}')" class="px-4 py-2 border border-[var(--rose)]/40 text-[var(--rose)] hover:bg-[var(--rose-soft)] text-xs font-semibold rounded-xl">Reject</button>`;
+    } else if (a.status === 'accepted' || a.status === 'assessment_started') {
+        html += `<button onclick="resendInvite('${aid}')" class="px-4 py-2 btn-ghost text-xs font-semibold rounded-xl">Resend assessment + pitch</button>`;
+        html += `<button onclick="applicantAction('${aid}','pitch')" class="px-4 py-2 btn-ghost text-xs font-semibold rounded-xl">${pitchSent ? 'Resend pitch PDF only' : 'Send pitch PDF only'}</button>`;
+    }
+    if (!html) html = '<span class="text-sm text-[var(--muted)]">No actions for this status.</span>';
+    document.getElementById('profileActions').innerHTML = html;
+
+    const modal = document.getElementById('profileModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeProfileModal(){
+    const m = document.getElementById('profileModal');
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+}
+
+let scheduleTargetId = null;
+
+function openScheduleModal(id){
+    scheduleTargetId = id;
+    const app = applications.find(x => String(x.id) === String(id));
+    const attempts = Number(app?.call_schedule_attempts || 0);
+    document.getElementById('scheduleAttemptHint').textContent = `Attempt ${attempts + 1} of ${CALL_SCHEDULE_MAX}`;
+    const input = document.getElementById('scheduleAtInput');
+    if (app?.call_scheduled_at) {
+        const d = new Date(app.call_scheduled_at);
+        const pad = (n) => String(n).padStart(2, '0');
+        input.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } else {
+        input.value = '';
+    }
+    const m = document.getElementById('scheduleModal');
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+}
+
+function closeScheduleModal(){
+    scheduleTargetId = null;
+    const m = document.getElementById('scheduleModal');
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+}
+
+async function confirmSchedule(){
+    if (!scheduleTargetId) return;
+    const raw = document.getElementById('scheduleAtInput').value;
+    if (!raw) return showToast('Pick a date and time.', 'error');
+    const scheduledAt = new Date(raw).toISOString();
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications/${scheduleTargetId}/send-call-schedule`, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ scheduledAt }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not schedule call');
+        showToast(data.message || 'Call scheduled.', 'success');
+        const app = applications.find(x => String(x.id) === String(scheduleTargetId));
+        if (app) {
+            app.call_schedule_attempts = data.call_schedule_attempts ?? Number(app.call_schedule_attempts || 0) + 1;
+            app.call_scheduled_at = data.call_scheduled_at || scheduledAt;
+            openProfileModal(scheduleTargetId);
+        }
+        closeScheduleModal();
+        refreshApplications();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function applicantAction(id, type){
+    const map = {
+        invoice: { path: 'send-invoice', conf: 'Send invoice + Levyni Co registration link to this applicant?', ok: 'Invoice + register link sent.' },
+        pitch: { path: 'send-pitch', conf: 'Send pitch brief PDF to this applicant?', ok: 'Pitch brief sent.' },
+    };
+    const cfg = map[type];
+    if (!cfg || !confirm(cfg.conf)) return;
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications/${id}/${cfg.path}`, { method: 'POST', headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Could not ${type}`);
+        showToast(data.message || cfg.ok, 'success');
+        const app = applications.find(x => String(x.id) === String(id));
+        if (app) {
+            if (type === 'invoice') { app.invoice_sent = true; app.invoice_sent_at = new Date().toISOString(); }
+            if (type === 'pitch') { app.pitch_sent = true; app.pitch_sent_at = new Date().toISOString(); }
+            openProfileModal(id);
+        }
+        refreshApplications();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function uploadApplicantFile(kind) {
+    if (!profileAppId) return;
+    const input = document.getElementById(kind === 'invoice' ? 'invoiceFileInput' : 'callAudioInput');
+    const file = input?.files?.[0];
+    if (!file) return;
+
+    const endpoint = kind === 'invoice' ? 'upload-invoice' : 'upload-call-audio';
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications/${profileAppId}/${endpoint}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        showToast(data.message || 'Uploaded.', 'success');
+        const app = applications.find(x => String(x.id) === String(profileAppId));
+        if (app) {
+            if (kind === 'invoice') app.invoice_file_path = data.invoice_file_path;
+            else app.call_audio_path = data.call_audio_path;
+            openProfileModal(profileAppId);
+        }
+        input.value = '';
+        refreshApplications();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function transcribeCallAudio() {
+    if (!profileAppId) return;
+    try {
+        const res = await fetch(`${API_BASE}/admin/applications/${profileAppId}/transcribe`, {
+            method: 'POST',
+            headers: authHeaders(),
+        });
+        const data = await res.json();
+        if (res.status === 501) {
+            showToast(data.message || 'Transcription coming soon.', 'error');
+            return;
+        }
+        if (!res.ok) throw new Error(data.error || 'Transcription failed');
+        showToast(data.message || 'Transcribed.', 'success');
+        const app = applications.find(x => String(x.id) === String(profileAppId));
+        if (app && data.call_transcript) {
+            app.call_transcript = data.call_transcript;
+            openProfileModal(profileAppId);
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// ============================================================
+// TIERS
+// ============================================================
+function renderTiers(){
+    const list = document.getElementById('tiersList');
+    if (!tiers.length){
+        list.innerHTML = `<div class="card p-8 text-center text-[var(--muted)] text-sm col-span-full">No tiers yet. Add one to get started.</div>`;
+        return;
+    }
+    list.innerHTML = [...tiers].sort((a,b)=>a.sortOrder-b.sortOrder).map(t => {
+        const count = applications.filter(a => a.tier === t.name).length;
+        return `
+        <div class="card p-6 relative ${t.recommended ? 'ring-1 ring-[var(--mint)]/50' : ''}">
+            ${t.recommended ? '<span class="absolute top-5 right-6 text-[10px] uppercase tracking-wide text-[var(--mint)] border border-[var(--mint)]/40 rounded-full px-2 py-0.5">Recommended</span>' : ''}
+            <div class="font-medium text-lg display mb-1">${escapeHtml(t.name)}</div>
+            <div class="text-xs text-[var(--muted)] mb-4 mono">${count} applicants · Order ${t.sortOrder}</div>
+            <div class="flex gap-6 text-sm mb-4">
+                <div><span class="text-[var(--muted)] text-xs">Linking fee</span><div class="text-[var(--naira)] font-semibold mono">₦${t.amount.toLocaleString()}</div></div>
+                <div><span class="text-[var(--muted)] text-xs">Slot fee</span><div class="text-[var(--naira)] font-semibold mono">₦${t.slotFee.toLocaleString()}</div></div>
+            </div>
+            <ul class="text-sm text-[var(--muted)] space-y-1.5 stitch pt-4 mb-4">
+                ${t.features.map(f => `<li class="flex gap-2"><svg class="icon w-4 h-4 shrink-0 text-[var(--mint)] mt-0.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span>${escapeHtml(f)}</span></li>`).join('')}
+            </ul>
+            <div class="flex gap-2">
+                <button onclick="openTierModal('${t.id}')" class="flex-1 px-4 py-2 btn-ghost text-xs font-semibold rounded-xl">Edit</button>
+                <button onclick="deleteTier('${t.id}')" class="flex-1 px-4 py-2 border border-[var(--rose)]/40 text-[var(--rose)] hover:bg-[var(--rose-soft)] text-xs font-semibold rounded-xl">Delete</button>
+            </div>
+        </div>
+    `}).join('');
+}
+
+function openTierModal(id){
+    editingTierId = id || null;
+    const existing = id ? tiers.find((t) => t.id === id) : null;
+
+    document.getElementById('tierModalTitle').textContent = existing ? 'Edit tier' : 'Add tier';
+    document.getElementById('tierName').value = existing ? existing.name : '';
+    document.getElementById('tierAmount').value = existing ? existing.amount : '';
+    document.getElementById('tierSlotFee').value = existing ? existing.slotFee : '';
+    document.getElementById('tierFeatures').value = existing ? existing.features.join('\n') : '';
+    document.getElementById('tierRecommended').checked = existing ? existing.recommended : false;
+    document.getElementById('tierSortOrder').value = existing ? existing.sortOrder : (tiers.length ? Math.max(...tiers.map(t => t.sortOrder)) + 1 : 1);
+
+    const modal = document.getElementById('tierModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeTierModal(){
+    editingTierId = null;
+    const modal = document.getElementById('tierModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+async function saveTier(){
+    const name = document.getElementById('tierName').value.trim();
+    const amount = Number(document.getElementById('tierAmount').value);
+    const slotFee = Number(document.getElementById('tierSlotFee').value);
+    const features = document.getElementById('tierFeatures').value.split('\n').map((f) => f.trim()).filter(Boolean);
+    const recommended = document.getElementById('tierRecommended').checked;
+    const sortOrder = Number(document.getElementById('tierSortOrder').value) || 0;
+
+    if (!name) return showToast('Tier name is required.', 'error');
+    if (!amount || amount <= 0) return showToast('Linking fee must be a positive number.', 'error');
+    if (!features.length) return showToast('Add at least one feature.', 'error');
+
+    const payload = { name, amount, slotFee: slotFee || 0, features, recommended, sortOrder };
+
+    try {
+        const url = editingTierId ? `${API_BASE}/admin/tiers/${editingTierId}` : `${API_BASE}/admin/tiers`;
+        const res = await fetch(url, {
+            method: editingTierId ? 'PUT' : 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not save tier');
+        closeTierModal();
+        showToast('Tier saved.', 'success');
+        refreshTiers();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function deleteTier(id){
+    if (!confirm('Delete this tier? Founders will no longer be able to select it.')) return;
+    try {
+        const res = await fetch(`${API_BASE}/admin/tiers/${id}`, { method: 'DELETE', headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not delete tier');
+        showToast('Tier deleted.', 'success');
+        refreshTiers();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// ============================================================
+// QUESTIONS
+// ============================================================
+function renderQuestions(){
+    const list = document.getElementById('questionsList');
+    if (!questions.length){
+        list.innerHTML = `<div class="card p-8 text-center text-[var(--muted)] text-sm">No questions yet. Add one to get started.</div>`;
+        return;
+    }
+    const sorted = [...questions].sort((a,b) => a.sortOrder - b.sortOrder);
+    list.innerHTML = sorted.map(q => `
+        <div class="card p-6">
+            <div class="flex justify-between items-start gap-4 mb-4">
+                <div class="flex items-start gap-3 flex-1">
+                    <span class="text-xs text-[var(--muted)] mono shrink-0 mt-1">Q${String(q.sortOrder).padStart(2,'0')}</span>
+                    <h3 class="font-medium leading-snug">${escapeHtml(q.question)}</h3>
+                </div>
+                <div class="flex gap-2 whitespace-nowrap shrink-0">
+                    <button onclick="openQuestionModal('${q.id}')" class="px-4 py-2 btn-ghost text-xs font-semibold rounded-xl">Edit</button>
+                    <button onclick="deleteQuestion('${q.id}')" class="px-4 py-2 border border-[var(--rose)]/40 text-[var(--rose)] hover:bg-[var(--rose-soft)] text-xs font-semibold rounded-xl">Delete</button>
+                </div>
+            </div>
+            <div class="space-y-1.5 ml-9">
+                ${q.options.map((opt, i) => `
+                    <div class="text-sm flex items-center gap-2 ${i === q.correctIndex ? 'text-[var(--mint)]' : 'text-[var(--muted)]'}">
+                        <span class="w-5 h-5 rounded-lg border ${i === q.correctIndex ? 'border-[var(--mint)] bg-[var(--mint-soft)]' : 'border-[var(--line-strong)]'} flex items-center justify-center text-[10px] font-bold shrink-0">${String.fromCharCode(65 + i)}</span>
+                        <span>${escapeHtml(opt)}</span>
+                        ${i === q.correctIndex ? '<span class="text-[10px] uppercase tracking-wide">correct</span>' : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function openQuestionModal(id){
+    editingQuestionId = id || null;
+    const existing = id ? questions.find((q) => q.id === id) : null;
+
+    document.getElementById('questionModalTitle').textContent = existing ? 'Edit question' : 'Add question';
+    document.getElementById('questionText').value = existing ? existing.question : '';
+    document.getElementById('questionSortOrder').value = existing ? existing.sortOrder : (questions.length ? Math.max(...questions.map(q => q.sortOrder)) + 1 : 1);
+
+    const optionsList = document.getElementById('optionsList');
+    optionsList.innerHTML = '';
+    if (existing) {
+        existing.options.forEach((opt, i) => addOptionRow(opt, i === existing.correctIndex));
+    } else {
+        addOptionRow('', true);
+        addOptionRow('', false);
+        addOptionRow('', false);
+        addOptionRow('', false);
+    }
+
+    const modal = document.getElementById('questionModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeQuestionModal(){
+    editingQuestionId = null;
+    const modal = document.getElementById('questionModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function addOptionRow(value, checked){
+    const optionsList = document.getElementById('optionsList');
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-3';
+    row.innerHTML = `
+        <input type="radio" name="correctOption" class="w-5 h-5" style="accent-color:var(--mint);" ${checked ? 'checked' : ''}>
+        <input type="text" class="option-text field flex-1" value="${escapeHtml(value)}" placeholder="Answer option">
+        <button type="button" onclick="this.parentElement.remove()" class="text-[var(--muted)] hover:text-[var(--rose)] px-2">✕</button>
+    `;
+    optionsList.appendChild(row);
+}
+
+async function saveQuestion(){
+    const question = document.getElementById('questionText').value.trim();
+    const sortOrder = Number(document.getElementById('questionSortOrder').value) || 0;
+    const rows = Array.from(document.querySelectorAll('#optionsList > div'));
+    const options = rows.map((r) => r.querySelector('.option-text').value.trim());
+    const correctIndex = rows.findIndex((r) => r.querySelector('input[type=radio]').checked);
+
+    if (!question) return showToast('Question text is required.', 'error');
+    if (options.some((o) => !o) || options.length < 2) return showToast('At least 2 non-empty options are required.', 'error');
+    if (correctIndex === -1) return showToast('Select which option is correct.', 'error');
+
+    const payload = { question, options, correctIndex, sortOrder };
+
+    try {
+        const url = editingQuestionId ? `${API_BASE}/admin/questions/${editingQuestionId}` : `${API_BASE}/admin/questions`;
+        const res = await fetch(url, {
+            method: editingQuestionId ? 'PUT' : 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not save question');
+        closeQuestionModal();
+        showToast('Question saved.', 'success');
+        loadQuestions();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function deleteQuestion(id){
+    if (!confirm('Delete this question? This cannot be undone.')) return;
+    try {
+        const res = await fetch(`${API_BASE}/admin/questions/${id}`, { method: 'DELETE', headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not delete question');
+        showToast('Question deleted.', 'success');
+        loadQuestions();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+async function loadSettings(){
+    try {
+        const res = await fetch(`${API_BASE}/admin/settings`, { headers: authHeaders() });
+        if (res.status === 401) return logout();
+        const data = await res.json();
+        const s = data.settings || {};
+        document.getElementById('settingsCohortName').value = s.cohortName || '';
+        document.getElementById('settingsMaxApplications').value = s.maxApplications || '';
+        document.getElementById('settingsWhatsappUrl').value = s.whatsappGroupUrl || '';
+
+        try {
+            const statusRes = await fetch(`${API_BASE}/applications/cohort-status`);
+            const statusData = await statusRes.json();
+            document.getElementById('settingsCohortCount').textContent =
+                `${statusData.submitted} of ${statusData.maxApplications} applications used for ${statusData.cohortName}.`;
+            document.getElementById('cohortCapLabel').textContent = `of ${statusData.maxApplications} cap`;
+        } catch (err) {
+            // non-critical, skip silently
+        }
+    } catch (err) {
+        showToast('Could not load settings.', 'error');
+    }
+}
+
+async function saveSettings(){
+    const cohortName = document.getElementById('settingsCohortName').value.trim();
+    const maxApplications = Number(document.getElementById('settingsMaxApplications').value);
+    const whatsappGroupUrl = document.getElementById('settingsWhatsappUrl').value.trim();
+
+    if (!cohortName) return showToast('Cohort name is required.', 'error');
+    if (!maxApplications || maxApplications < 1) return showToast('Max applications must be a positive number.', 'error');
+
+    try {
+        const res = await fetch(`${API_BASE}/admin/settings`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ cohortName, maxApplications, whatsappGroupUrl: whatsappGroupUrl || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not save settings');
+        showToast('Settings saved.', 'success');
+        loadSettings();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+(async function init(){
+    await Promise.all([loadApplications(), loadTiers()]);
+    switchView('overview');
+})();
+</script>
+</body>
+</html>

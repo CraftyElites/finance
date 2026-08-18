@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Levyni Connect — Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .heading-font { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen flex items-center justify-center px-6">
+    <div class="w-full max-w-md">
+        <div class="flex items-center gap-3 mb-10 justify-center">
+            <div class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center font-bold text-black">L</div>
+            <span class="heading-font text-2xl">Levyni Connect Admin</span>
+        </div>
+
+        <div class="bg-zinc-900 border border-white/10 rounded-3xl p-10">
+            <h1 class="heading-font text-2xl mb-8">Sign in</h1>
+
+            <div id="loginError" class="hidden mb-6 bg-red-500/10 border border-red-500/40 text-red-300 rounded-2xl px-5 py-3 text-sm"></div>
+
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">Email</label>
+                    <input type="email" id="email" required autocomplete="username"
+                           class="w-full bg-zinc-950 border border-white/10 focus:border-emerald-400 rounded-2xl px-5 py-4 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">Password</label>
+                    <input type="password" id="password" required autocomplete="current-password"
+                           class="w-full bg-zinc-950 border border-white/10 focus:border-emerald-400 rounded-2xl px-5 py-4 outline-none">
+                </div>
+                <button type="submit" id="loginBtn"
+                        class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-semibold rounded-2xl transition-all">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        if (localStorage.getItem('levyni_admin_token')) {
+            window.location.href = 'dashboard.html';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            const errEl = document.getElementById('loginError');
+            errEl.classList.add('hidden');
+            btn.disabled = true;
+            btn.textContent = 'Signing in…';
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Login failed');
+
+                localStorage.setItem('levyni_admin_token', data.token);
+                localStorage.setItem('levyni_admin_name', data.admin.name);
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>

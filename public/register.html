@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Levyni Co account — Levyni Connect</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background:#0d1210; color:#edf2ef; font-family: system-ui, sans-serif; }
+    .card { background:#141b18; border:1px solid rgba(237,242,239,.08); border-radius:20px; }
+    .btn { background:#f0a860; color:#1a1207; font-weight:600; border-radius:14px; }
+    .muted { color:#87968d; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+  <div class="card max-w-md w-full p-8">
+    <div class="text-xs uppercase tracking-wide muted mb-2">Levyni Connect</div>
+    <h1 class="text-2xl font-semibold mb-2">Create your Levyni Co account</h1>
+    <p id="status" class="muted text-sm mb-6">Checking your invite…</p>
+    <div id="info" class="hidden space-y-2 text-sm mb-6"></div>
+    <button id="actionBtn" class="hidden w-full py-3 btn" type="button">Create account</button>
+    <div id="result" class="hidden mt-6 text-sm space-y-2"></div>
+  </div>
+  <script>
+    const API = '/api';
+    const token = new URLSearchParams(location.search).get('token');
+    const statusEl = document.getElementById('status');
+    const infoEl = document.getElementById('info');
+    const btn = document.getElementById('actionBtn');
+    const result = document.getElementById('result');
+
+    if (!token) {
+      statusEl.textContent = 'Missing invite token.';
+    } else {
+      fetch(`${API}/applications/register/${encodeURIComponent(token)}`)
+        .then(async (r) => {
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || 'Invalid invite');
+          statusEl.textContent = 'Invite valid. Confirm to create your account.';
+          infoEl.classList.remove('hidden');
+          infoEl.innerHTML = `
+            <div><span class="muted">Name</span><div class="font-medium">${d.fullName || '—'}</div></div>
+            <div><span class="muted">Business</span><div class="font-medium">${d.businessName || '—'}</div></div>
+            <div><span class="muted">Email</span><div class="font-medium">${d.email}</div></div>
+            <div><span class="muted">Username</span><div class="font-medium">${d.username}</div></div>
+          `;
+          btn.classList.remove('hidden');
+        })
+        .catch((e) => { statusEl.textContent = e.message; });
+    }
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      try {
+        const r = await fetch(`${API}/applications/register/${encodeURIComponent(token)}`, { method: 'POST' });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Registration failed');
+        statusEl.textContent = d.message || 'Account created.';
+        btn.classList.add('hidden');
+        result.classList.remove('hidden');
+        let html = '';
+        if (d.temporaryPassword) {
+          html += `<p class="muted">Temporary password (save this):</p>
+                   <p class="font-mono text-lg" style="color:#f0a860">${d.temporaryPassword}</p>`;
+        }
+        if (d.loginUrl) {
+          html += `<p class="mt-4"><a class="underline" style="color:#3ecf8e" href="${d.loginUrl}">Sign in to Levyni Co</a></p>`;
+        }
+        result.innerHTML = html;
+      } catch (e) {
+        statusEl.textContent = e.message;
+        btn.disabled = false;
+        btn.textContent = 'Create account';
+      }
+    });
+  </script>
+</body>
+</html>

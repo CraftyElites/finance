@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Levyni Connect Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .heading-font { font-family: 'Space Grotesk', sans-serif; }
+        .question-card { transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+    <div class="max-w-3xl mx-auto py-12 px-6">
+        <div class="flex justify-between mb-12 items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-emerald-500 rounded-2xl flex items-center justify-center text-xl font-black">L</div>
+                <span class="heading-font text-3xl">Assessment</span>
+            </div>
+            <div class="text-right">
+                <div class="text-xs text-zinc-400">TIME LEFT</div>
+                <div id="timer" class="text-3xl font-mono font-semibold text-emerald-400">39:42</div>
+            </div>
+        </div>
+
+        <!-- Gate state: validating / invalid link -->
+        <div id="gateState" class="text-center py-24">
+            <div class="text-zinc-400">Checking your invite link…</div>
+        </div>
+
+        <div id="quizDisclaimer" class="hidden text-xs text-zinc-500 text-center -mt-8 mb-10 max-w-lg mx-auto leading-relaxed">
+            This assessment measures investment readiness. Answering correctly does not guarantee funding —
+            investment decisions are made independently by third-party investors.
+        </div>
+
+        <div id="quiz-container" class="hidden"><!-- JS populated questions --></div>
+
+        <div id="navRow" class="hidden flex justify-between mt-12">
+            <button onclick="prevQuestion()" id="prevBtn"
+                    class="px-8 py-4 border border-white/30 rounded-3xl hover:bg-white/5">Previous</button>
+            <button onclick="nextQuestion()" id="nextBtn"
+                    class="px-10 py-4 bg-emerald-500 text-black font-semibold rounded-3xl">Next Question</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const token = new URLSearchParams(window.location.search).get('token');
+
+        let questions = []; // loaded from the server — managed via the admin dashboard
+        let currentQuestion = 0;
+        let answers = []; // parallel array of selected option indices, or null
+        let submitted = false;
+
+        async function init() {
+            if (!token) {
+                return showGateMessage('This link is missing its access token. Please use the exact link from your email.');
+            }
+            try {
+                const res = await fetch(`${API_BASE}/assessment/${token}`);
+                const data = await res.json();
+                if (!res.ok) {
+                    return showGateMessage(data.error || 'This link is not valid.');
+                }
+                if (!Array.isArray(data.questions) || data.questions.length === 0) {
+                    return showGateMessage('No assessment questions are configured yet. Please contact Levyni.');
+                }
+
+                questions = data.questions; // [{ id, question, options }]
+                answers = new Array(questions.length).fill(null);
+
+                document.getElementById('gateState').classList.add('hidden');
+                document.getElementById('quiz-container').classList.remove('hidden');
+                document.getElementById('quizDisclaimer').classList.remove('hidden');
+                document.getElementById('navRow').classList.remove('hidden');
+                renderQuestion();
+                startTimer();
+            } catch (err) {
+                showGateMessage('Could not reach the server. Please try again shortly.');
+            }
+        }
+
+        function showGateMessage(msg) {
+            document.getElementById('gateState').innerHTML = `
+                <div class="max-w-md mx-auto bg-zinc-900 border border-red-500/30 rounded-3xl p-10">
+                    <div class="text-4xl mb-4">🔒</div>
+                    <h2 class="heading-font text-2xl mb-3">Link unavailable</h2>
+                    <p class="text-zinc-400">${msg}</p>
+                </div>`;
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('quiz-container');
+            const q = questions[currentQuestion];
+
+            let html = `
+                <div class="question-card bg-zinc-900 border border-white/10 rounded-3xl p-10">
+                    <div class="flex justify-between text-sm mb-8">
+                        <span class="text-emerald-400">Question ${currentQuestion + 1} of ${questions.length}</span>
+                        <span class="text-zinc-400">${Math.round((currentQuestion + 1) / questions.length * 100)}% Complete</span>
+                    </div>
+                    <h2 class="text-2xl leading-tight mb-10">${q.question}</h2>
+                    <div class="space-y-4" id="options">
+            `;
+
+            q.options.forEach((opt, i) => {
+                html += `
+                    <label onclick="selectAnswer(${i})"
+                           class="flex items-center gap-4 p-6 border border-white/10 hover:border-emerald-400 rounded-2xl cursor-pointer transition-all ${answers[currentQuestion] === i ? 'border-emerald-400 bg-emerald-500/10' : ''}">
+                        <div class="w-6 h-6 border-2 border-white/40 rounded-xl flex items-center justify-center text-xs font-bold">
+                            ${String.fromCharCode(65 + i)}
+                        </div>
+                        <span>${opt}</span>
+                    </label>
+                `;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'Finish Quiz' : 'Next Question';
+        }
+
+        function selectAnswer(idx) {
+            answers[currentQuestion] = idx;
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        async function finishQuiz() {
+            if (submitted) return;
+            submitted = true;
+
+            document.getElementById('navRow').classList.add('hidden');
+            document.getElementById('quizDisclaimer').classList.add('hidden');
+            document.getElementById('quiz-container').innerHTML = `
+                <div class="text-center py-20">
+                    <div class="mx-auto w-28 h-28 rounded-full border-8 border-emerald-400 flex items-center justify-center mb-8">
+                        <span class="text-6xl">🎉</span>
+                    </div>
+                    <div class="text-emerald-400 text-2xl mb-8">Submitting your results…</div>
+                </div>`;
+
+            // Score is computed server-side against the live answer key, so the
+            // client only reports which option it picked for each question.
+            const payload = {
+                answers: questions.map((q, i) => ({ questionId: q.id, selectedIndex: answers[i] })),
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/assessment/${token}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Submission failed');
+
+                const percent = data.total ? Math.round((data.score / data.total) * 100) : 0;
+
+                document.getElementById('quiz-container').innerHTML = `
+                    <div class="text-center py-20">
+                        <div class="mx-auto w-28 h-28 rounded-full border-8 border-emerald-400 flex items-center justify-center mb-8">
+                            <span class="text-6xl">✅</span>
+                        </div>
+                        <h2 class="heading-font text-5xl mb-2">${percent}% — Received</h2>
+                        <div class="text-emerald-400 text-xl mb-8">Investment Readiness Score Recorded</div>
+                        <p class="text-zinc-400 max-w-md mx-auto mb-4">
+                            Thanks — the Levyni team has your results. This link is now used up and won't
+                            open again. We'll follow up with next steps by email.
+                        </p>
+                        <p class="text-zinc-500 text-xs max-w-md mx-auto leading-relaxed">
+                            A strong score reflects your readiness — it does not guarantee funding.
+                            Investment decisions are made independently by third-party investors.
+                        </p>
+                    </div>`;
+            } catch (err) {
+                document.getElementById('quiz-container').innerHTML = `
+                    <div class="text-center py-20">
+                        <h2 class="heading-font text-3xl mb-4 text-red-400">Could not submit</h2>
+                        <p class="text-zinc-400">${err.message}. Please refresh and try again, or contact Levyni.</p>
+                    </div>`;
+                submitted = false;
+            }
+        }
+
+        // Timer (client-facing countdown only; the server enforces the real expiry)
+        let timeLeft = 39 * 60 + 42;
+        let timerHandle = null;
+        function startTimer() {
+            timerHandle = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(timerHandle);
+                    if (!submitted) finishQuiz();
+                    return;
+                }
+                const min = Math.floor(timeLeft / 60);
+                const sec = timeLeft % 60;
+                document.getElementById('timer').textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+            }, 1000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

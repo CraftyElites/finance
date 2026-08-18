@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Levyni Connect — Onboarding</title>
+    <!-- Fallback utility CSS: covers the Tailwind layout classes used on this
+         page. Declared BEFORE the Tailwind CDN script so Tailwind's own
+         stylesheet overrides it once loaded (equal specificity, later wins),
+         but the form stays usable if the CDN is blocked or slow. -->
+    <style>
+        .hidden{ display:none!important; }
+        .flex{ display:flex; } .grid{ display:grid; }
+        .flex-col{ flex-direction:column; }
+        .gap-4{ gap:1rem; }
+        .items-center{ align-items:center; }
+        .justify-between{ justify-content:space-between; }
+        .justify-center{ justify-content:center; }
+        .flex-1{ flex:1 1 0%; }
+        .text-center{ text-align:center; }
+        .min-h-screen{ min-height:100vh; }
+        .max-w-4xl{ max-width:56rem; } .max-w-md{ max-width:28rem; }
+        .mx-auto{ margin-left:auto; margin-right:auto; }
+        .w-full{ width:100%; }
+        .w-9{ width:2.25rem; } .h-9{ height:2.25rem; }
+        .w-8{ width:2rem; } .h-8{ height:2rem; }
+        .w-24{ width:6rem; } .h-24{ height:6rem; }
+        .h-px{ height:1px; } .h-32{ height:8rem; } .h-28{ height:7rem; }
+        .gap-3{ gap:0.75rem; } .gap-6{ gap:1.5rem; } .gap-8{ gap:2rem; }
+        .space-y-16 > * + *{ margin-top:4rem; }
+        .mb-2{ margin-bottom:0.5rem; } .mb-3{ margin-bottom:0.75rem; } .mb-4{ margin-bottom:1rem; }
+        .mb-8{ margin-bottom:2rem; } .mb-12{ margin-bottom:3rem; } .mb-16{ margin-bottom:4rem; }
+        .mt-8{ margin-top:2rem; }
+        .p-6{ padding:1.5rem; }
+        .px-6{ padding-left:1.5rem; padding-right:1.5rem; }
+        .px-10{ padding-left:2.5rem; padding-right:2.5rem; }
+        .py-4{ padding-top:1rem; padding-bottom:1rem; }
+        .py-5{ padding-top:1.25rem; padding-bottom:1.25rem; }
+        .py-7{ padding-top:1.75rem; padding-bottom:1.75rem; }
+        .py-12{ padding-top:3rem; padding-bottom:3rem; }
+        .py-24{ padding-top:6rem; padding-bottom:6rem; }
+        .rounded-2xl{ border-radius:1rem; } .rounded-3xl{ border-radius:1.5rem; } .rounded-full{ border-radius:9999px; }
+        .border{ border-width:1px; border-style:solid; } .border-4{ border-width:4px; border-style:solid; }
+        .font-bold{ font-weight:700; } .font-semibold{ font-weight:600; }
+        .uppercase{ text-transform:uppercase; } .tracking-widest{ letter-spacing:0.1em; }
+        .text-xs{ font-size:0.75rem; } .text-sm{ font-size:0.875rem; } .text-lg{ font-size:1.125rem; }
+        .text-xl{ font-size:1.25rem; } .text-2xl{ font-size:1.5rem; } .text-4xl{ font-size:2.25rem; }
+        .text-5xl{ font-size:3rem; }
+        .outline-none{ outline:none; }
+        @media (min-width:768px){ .md\:grid-cols-2{ grid-template-columns:repeat(2,minmax(0,1fr)); } .md\:grid-cols-3{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+        :root{
+            --bg:#080e0b;
+            --bg-2:#0d1512;
+            --field:#0f1713;
+            --line: rgba(237,247,241,0.09);
+            --line-strong: rgba(237,247,241,0.20);
+            --ink:#edf7f1;
+            --muted:#7c9186;
+            --muted-2:#4d5f57;
+            --accent:#ff8a3d;
+            --accent-ink:#ffc79a;
+            --accent-soft: rgba(255,138,61,0.10);
+            --accent-dim: rgba(255,138,61,0.35);
+            --danger:#ff5d7a;
+            --danger-soft: rgba(255,93,122,0.08);
+        }
+        body{
+            background-color:var(--bg);
+            color:var(--ink);
+            font-family:'Inter',system-ui,sans-serif;
+            background-image:
+                linear-gradient(180deg, rgba(255,138,61,0.05), transparent 340px),
+                radial-gradient(circle at 1px 1px, rgba(237,247,241,0.05) 1px, transparent 0);
+            background-size: 100% 100%, 24px 24px;
+        }
+        .heading-font{ font-family:'Space Grotesk',sans-serif; }
+        .mono{ font-family:'JetBrains Mono',monospace; letter-spacing:0.01em; }
+
+        /* Signature element carried over from the assessment page: a thin
+           tape across the top that fills as the form gets completed, so
+           progress reads at a glance without scrolling back up. */
+        #progressRail{ position:fixed; top:0; left:0; width:100%; height:3px; background:rgba(237,247,241,0.06); z-index:50; }
+        #progressRailFill{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent-dim), var(--accent)); transition:width 0.4s cubic-bezier(0.4,0,0.2,1); }
+
+        .field-label{ display:block; font-size:0.875rem; color:var(--muted); margin-bottom:0.5rem; }
+        .field-input{
+            width:100%; background:var(--field); border:1px solid var(--line); border-radius:14px;
+            padding:1.25rem 1.5rem; outline:none; color:var(--ink); transition:border-color 0.15s ease;
+        }
+        .field-input::placeholder{ color:var(--muted-2); }
+        .field-input:focus{ border-color:var(--accent-dim); }
+        select.field-input{ appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237c9186' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 1.25rem center; padding-right:3rem; }
+
+        .section-mark{ display:inline-block; width:2rem; height:1px; background:var(--accent); }
+
+        .radio-pill{ display:flex; align-items:center; gap:0.6rem; cursor:pointer; padding:0.9rem 1.4rem; border:1px solid var(--line); border-radius:12px; color:var(--ink); transition:all 0.15s ease; }
+        .radio-pill:has(input:checked){ border-color:var(--accent); background:var(--accent-soft); }
+        .radio-pill input{ accent-color: var(--accent); }
+
+        .btn-primary{ background:var(--accent); color:#04140d; }
+        .btn-primary:hover{ filter:brightness(1.08); }
+        .btn-primary:disabled{ opacity:0.4; cursor:not-allowed; }
+
+        ::selection{ background:var(--accent-dim); color:#04140d; }
+    </style>
+</head>
+<body>
+    <div id="progressRail"><div id="progressRailFill"></div></div>
+
+    <div class="max-w-4xl mx-auto min-h-screen py-12 px-6">
+        <!-- Progress -->
+        <div class="flex justify-between items-center mb-16">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-2xl flex items-center justify-center font-bold" style="background:var(--accent); color:#04140d;">L</div>
+                <div>
+                    <div class="heading-font text-2xl">Levyni Connect</div>
+                    <div class="text-xs mono" style="color:var(--accent-ink);">Application &bull; Step 2 of 4</div>
+                </div>
+            </div>
+            <div class="flex gap-8">
+                <div class="text-center">
+                    <div class="text-xs uppercase tracking-widest mono" style="color:var(--muted);">Tier</div>
+                    <div id="tierBadge" class="font-semibold mono" style="color:var(--accent-ink);">—</div>
+                </div>
+            </div>
+        </div>
+
+        <h1 class="heading-font text-5xl mb-3">Let's build your profile</h1>
+        <p class="mb-12" style="color:var(--muted);">This data helps us match you with the right investors.</p>
+
+        <div id="formError" class="hidden mb-8 rounded-2xl px-6 py-4" style="background:var(--danger-soft); border:1px solid rgba(255,93,122,0.3); color:var(--danger);"></div>
+
+        <!-- Resume state: shown instead of the form when a cached application
+             is found on load, so a returning person isn't forced to fill
+             everything out again just to reach WhatsApp. -->
+        <div id="resumeState" class="hidden mb-12 rounded-2xl px-6 py-6" style="background:var(--accent-soft); border:1px solid var(--accent-dim);">
+            <div class="flex items-center justify-between gap-6" style="flex-wrap:wrap;">
+                <div>
+                    <div class="font-semibold mb-1">Welcome back<span id="resumeName"></span> — we found your recent application.</div>
+                    <div class="text-sm" style="color:var(--muted);">Continue straight to WhatsApp with your saved details, or start a new application if this isn't you.</div>
+                </div>
+                <div class="flex gap-3" style="flex-wrap:wrap;">
+                    <a id="resumeWhatsappBtn" href="#" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-2 btn-primary font-semibold rounded-3xl px-6 py-3">
+                        <i class="fab fa-whatsapp"></i> Continue to WhatsApp
+                    </a>
+                    <button type="button" id="resumeStartNewBtn"
+                            class="rounded-3xl px-6 py-3 border" style="border-color:var(--line-strong); color:var(--muted); background:transparent;">
+                        Start New Application
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <form id="onboardingForm" class="space-y-16">
+            <!-- Contact -->
+            <div>
+                <h2 class="text-xl font-semibold mb-8 flex items-center gap-3">
+                    <span class="section-mark"></span> Your Details
+                </h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <label class="field-label">Full Name</label>
+                        <input type="text" id="fullName" required
+                               class="field-input"
+                               placeholder="e.g. Abraham Atenaga">
+                    </div>
+                    <div>
+                        <label class="field-label">Email</label>
+                        <input type="email" id="email" required
+                               class="field-input"
+                               placeholder="you@example.com">
+                    </div>
+                    <div>
+                        <label class="field-label">Phone Number</label>
+                        <input type="tel" id="phone" required
+                               class="field-input"
+                               placeholder="+234...">
+                    </div>
+                    <div>
+                        <label class="field-label">WhatsApp Number</label>
+                        <input type="tel" id="whatsappPhone" required
+                               class="field-input"
+                               placeholder="+234... (we'll add you to our WhatsApp group)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Basics -->
+            <div>
+                <h2 class="text-xl font-semibold mb-8 flex items-center gap-3">
+                    <span class="section-mark"></span> Business Basics
+                </h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <label class="field-label">Business Name</label>
+                        <input type="text" id="bizName"
+                               class="field-input"
+                               placeholder="e.g. GreenHarvest Farms">
+                    </div>
+                    <div>
+                        <label class="field-label">Company Logo</label>
+                        <input type="file" id="logo" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                               class="field-input" style="padding:0.9rem 1.25rem;">
+                        <p class="text-xs mt-2" style="color:var(--muted-2);">PNG, JPG, or SVG · max 5MB. Used when we add your company to Levyni Co.</p>
+                        <div id="logoPreview" class="hidden mt-3">
+                            <img id="logoPreviewImg" alt="Logo preview" style="max-height:64px;max-width:160px;border-radius:10px;border:1px solid var(--line);">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label">Industry</label>
+                        <select id="industry" class="field-input">
+                            <option>Agriculture</option>
+                            <option>FinTech</option>
+                            <option>HealthTech</option>
+                            <option>EdTech</option>
+                            <option>Logistics</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">CAC Registered?</label>
+                        <div class="flex gap-6">
+                            <label class="radio-pill"><input type="radio" name="cac" value="yes"> Yes</label>
+                            <label class="radio-pill"><input type="radio" name="cac" value="no"> No</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label">Stage</label>
+                        <select id="stage" class="field-input">
+                            <option>Idea</option>
+                            <option>MVP</option>
+                            <option>Early Revenue</option>
+                            <option>Scaling</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Traction -->
+            <div>
+                <h2 class="text-xl font-semibold mb-8 flex items-center gap-3">
+                    <span class="section-mark"></span> Traction
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div>
+                        <label class="field-label">Monthly Revenue</label>
+                        <select id="monthlyRevenue" class="field-input">
+                            <option>₦0 — ₦500k</option>
+                            <option>₦500k — ₦2M</option>
+                            <option>₦2M — ₦10M</option>
+                            <option>₦10M+</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Team Size</label>
+                        <input type="number" id="teamSize" class="field-input" placeholder="5">
+                    </div>
+                    <div>
+                        <label class="field-label">Years Operating</label>
+                        <input type="number" id="yearsOperating" step="0.1" class="field-input" placeholder="1.5">
+                    </div>
+                </div>
+                <textarea id="tractionNotes" class="mt-8 field-input h-32" placeholder="What have you built so far?"></textarea>
+            </div>
+
+            <!-- The Ask -->
+            <div>
+                <h2 class="text-xl font-semibold mb-8 flex items-center gap-3">
+                    <span class="section-mark"></span> The Ask
+                </h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <label class="field-label">Amount Seeking</label>
+                        <input type="text" id="amountSeeking" class="field-input" placeholder="₦45,000,000">
+                    </div>
+                    <div>
+                        <label class="field-label">Use of Funds</label>
+                        <textarea id="useOfFunds" class="field-input h-28" placeholder="Breakdown of planned allocation..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn"
+                    class="w-full py-7 btn-primary font-semibold rounded-3xl text-lg transition-all flex items-center justify-center gap-3">
+                <span id="submitLabel">Submit Profile</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <!-- Success state -->
+        <div id="successState" class="hidden text-center py-24">
+            <div class="mx-auto w-24 h-24 rounded-full border-4 flex items-center justify-center mb-8 text-5xl" style="border-color:var(--accent);">✅</div>
+            <h2 class="heading-font text-4xl mb-4">Application received</h2>
+            <p class="max-w-md mx-auto mb-8" style="color:var(--muted);">
+                Join our WhatsApp group and send your details there. Once we confirm your payment
+                receipt for your slot, we'll accept you and email a one-time link to your readiness
+                assessment — the next stage of the process.
+            </p>
+            <div class="flex flex-col items-center gap-4">
+                <a id="whatsappBtn" href="#" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-3 btn-primary font-semibold rounded-3xl px-10 py-5">
+                    <i class="fab fa-whatsapp text-xl"></i> Join the WhatsApp Group
+                </a>
+                <a id="whatsappDetailsBtn" href="#" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-3 font-semibold rounded-3xl px-10 py-5"
+                   style="border:1px solid var(--line-strong); color:var(--ink);">
+                    <i class="fab fa-whatsapp text-xl"></i> Send My Details via WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const params = new URLSearchParams(window.location.search);
+        const tier = params.get('tier') || 'Starter';
+        document.getElementById('tierBadge').textContent = tier;
+
+        // ---- WhatsApp "send my details" config -----------------------------
+        // TODO: replace with Levyni's real WhatsApp Business number, digits
+        // only, country code first, no leading + or 0 (e.g. Nigerian mobile
+        // 0801 234 5678 becomes 2348012345678).
+        const WHATSAPP_BUSINESS_NUMBER = '2340000000000';
+
+        // How long a submitted application stays cached in the browser so a
+        // returning visitor can jump straight to WhatsApp instead of
+        // reapplying. 7 days is generous for someone who closes the tab
+        // before messaging and comes back later.
+        const APPLICATION_CACHE_KEY = 'levyniApplicationCache';
+        const APPLICATION_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+        // Note: this is light obfuscation (base64), not real encryption —
+        // there's no secret a browser can hold securely, so anything stored
+        // client-side can be read by anyone with access to that browser.
+        // It just keeps the applicant's details from sitting in localStorage
+        // as plain, greppable JSON.
+        function encodeApplicationData(obj) {
+            return btoa(encodeURIComponent(JSON.stringify(obj)));
+        }
+        function decodeApplicationData(str) {
+            return JSON.parse(decodeURIComponent(atob(str)));
+        }
+
+        function buildWhatsAppDetailsMessage(p) {
+            const lines = [
+                'New Levyni Connect application',
+                `Name: ${p.fullName}`,
+                `Tier: ${p.tier}`,
+                `Business: ${p.businessName || '-'}`,
+                `Industry: ${p.industry || '-'}`,
+                `Stage: ${p.stage || '-'}`,
+                `Email: ${p.email}`,
+                `Phone: ${p.phone}`,
+                `WhatsApp: ${p.whatsappPhone}`,
+                `Amount Seeking: ${p.amountSeeking || '-'}`,
+            ];
+            return lines.join('\n');
+        }
+        function buildWhatsAppDetailsUrl(payload) {
+            const message = buildWhatsAppDetailsMessage(payload);
+            return `https://wa.me/${WHATSAPP_BUSINESS_NUMBER}?text=${encodeURIComponent(message)}`;
+        }
+
+        function saveApplicationCache(payload, detailsUrl, groupUrl) {
+            try {
+                const cache = {
+                    data: encodeApplicationData(payload),
+                    detailsUrl,
+                    groupUrl: groupUrl || null,
+                    savedAt: Date.now(),
+                };
+                localStorage.setItem(APPLICATION_CACHE_KEY, JSON.stringify(cache));
+            } catch (err) {
+                // Storage can fail (private browsing, quota, etc.) — the
+                // WhatsApp buttons on this page still work either way, the
+                // person just won't see the resume prompt on reload.
+            }
+        }
+
+        function loadApplicationCache() {
+            try {
+                const raw = localStorage.getItem(APPLICATION_CACHE_KEY);
+                if (!raw) return null;
+                const cache = JSON.parse(raw);
+                if (!cache || !cache.savedAt || !cache.detailsUrl) return null;
+                if (Date.now() - cache.savedAt > APPLICATION_CACHE_TTL_MS) {
+                    localStorage.removeItem(APPLICATION_CACHE_KEY);
+                    return null;
+                }
+                return cache;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function showResumeState(cache) {
+            let applicant = null;
+            try { applicant = decodeApplicationData(cache.data); } catch (err) { /* ignore */ }
+
+            document.getElementById('resumeName').textContent =
+                applicant && applicant.fullName ? `, ${applicant.fullName}` : '';
+            document.getElementById('resumeWhatsappBtn').href = cache.detailsUrl;
+            document.getElementById('onboardingForm').classList.add('hidden');
+            document.getElementById('resumeState').classList.remove('hidden');
+        }
+
+        document.getElementById('resumeStartNewBtn').addEventListener('click', () => {
+            localStorage.removeItem(APPLICATION_CACHE_KEY);
+            document.getElementById('resumeState').classList.add('hidden');
+            document.getElementById('onboardingForm').classList.remove('hidden');
+        });
+
+        const cachedApplication = loadApplicationCache();
+        if (cachedApplication) {
+            showResumeState(cachedApplication);
+        }
+
+        // If the current cohort has already hit its application cap
+        // (admin-configurable, defaults to 1,000), don't let people fill
+        // out the whole form only to be rejected at submit.
+        (async function checkCohortStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/applications/cohort-status`);
+                const data = await res.json();
+                if (data && data.open === false) {
+                    document.getElementById('onboardingForm').classList.add('hidden');
+                    showError(`Applications for ${data.cohortName} are currently closed. Please check back for the next cohort.`);
+                }
+            } catch (err) {
+                // Fail silently — worst case the person finds out at submit time.
+            }
+        })();
+
+        // Progressive fill: the top rail tracks how much of the form has
+        // been completed, updating live as the person types or picks
+        // options. Text/number/textarea fields count once they have a
+        // value; selects and the CAC radio count once a real choice has
+        // been made (their own first option still counts as "answered").
+        const trackedTextFields = ['fullName', 'email', 'phone', 'whatsappPhone', 'bizName', 'teamSize', 'yearsOperating', 'tractionNotes', 'amountSeeking', 'useOfFunds'];
+        const trackedSelects = ['industry', 'stage', 'monthlyRevenue'];
+        const totalFields = trackedTextFields.length + trackedSelects.length + 1; // +1 for CAC radio group
+
+        function updateProgress() {
+            let filled = 0;
+            trackedTextFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.value.trim().length > 0) filled++;
+            });
+            trackedSelects.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.value) filled++;
+            });
+            if (document.querySelector('input[name="cac"]:checked')) filled++;
+
+            const pct = Math.round((filled / totalFields) * 100);
+            document.getElementById('progressRailFill').style.width = pct + '%';
+        }
+        document.getElementById('onboardingForm').addEventListener('input', updateProgress);
+        document.getElementById('onboardingForm').addEventListener('change', updateProgress);
+        updateProgress();
+
+        document.getElementById('logo').addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            const wrap = document.getElementById('logoPreview');
+            const img = document.getElementById('logoPreviewImg');
+            if (!file) { wrap.classList.add('hidden'); return; }
+            img.src = URL.createObjectURL(file);
+            wrap.classList.remove('hidden');
+        });
+
+        document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const whatsappPhone = document.getElementById('whatsappPhone').value.trim();
+
+            if (!fullName || !email || !phone || !whatsappPhone) {
+                showError('Full name, email, phone and WhatsApp number are required.');
+                return;
+            }
+
+            const cacEl = document.querySelector('input[name="cac"]:checked');
+
+            const payload = {
+                fullName,
+                email,
+                phone,
+                whatsappPhone,
+                tier,
+                businessName: document.getElementById('bizName').value.trim(),
+                industry: document.getElementById('industry').value,
+                cacRegistered: cacEl ? cacEl.value : null,
+                stage: document.getElementById('stage').value,
+                monthlyRevenue: document.getElementById('monthlyRevenue').value,
+                teamSize: document.getElementById('teamSize').value,
+                yearsOperating: document.getElementById('yearsOperating').value,
+                tractionNotes: document.getElementById('tractionNotes').value.trim(),
+                amountSeeking: document.getElementById('amountSeeking').value.trim(),
+                useOfFunds: document.getElementById('useOfFunds').value.trim(),
+            };
+
+            const btn = document.getElementById('submitBtn');
+            const label = document.getElementById('submitLabel');
+            btn.disabled = true;
+            label.textContent = 'Submitting...';
+
+            try {
+                const formData = new FormData();
+                Object.entries(payload).forEach(([k, v]) => {
+                    if (v != null && v !== '') formData.append(k, v);
+                });
+                const logoFile = document.getElementById('logo').files[0];
+                if (logoFile) formData.append('logo', logoFile);
+
+                const res = await fetch(`${API_BASE}/applications`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Could not submit application');
+                }
+
+                document.getElementById('progressRailFill').style.width = '100%';
+                document.getElementById('onboardingForm').classList.add('hidden');
+                document.getElementById('successState').classList.remove('hidden');
+
+                const whatsappBtn = document.getElementById('whatsappBtn');
+                if (data.whatsappUrl) {
+                    whatsappBtn.href = data.whatsappUrl;
+                    // Give the person a beat to read the message, then take
+                    // them straight into the group.
+                    setTimeout(() => window.open(data.whatsappUrl, '_blank', 'noopener'), 1200);
+                } else {
+                    whatsappBtn.classList.add('hidden');
+                }
+
+                // Second button: a direct chat prefilled with this person's
+                // details, so they don't have to retype anything once
+                // they're in WhatsApp. Cache it so a reload can offer to
+                // resume instead of forcing a fresh application.
+                const detailsUrl = buildWhatsAppDetailsUrl(payload);
+                document.getElementById('whatsappDetailsBtn').href = detailsUrl;
+                saveApplicationCache(payload, detailsUrl, data.whatsappUrl);
+            } catch (err) {
+                showError(err.message);
+                btn.disabled = false;
+                label.textContent = 'Submit Profile';
+            }
+        });
+
+        function showError(msg) {
+            const el = document.getElementById('formError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    </script>
+</body>
+</html>
